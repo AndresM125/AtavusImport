@@ -1,16 +1,39 @@
 import React from "react";
 
-const UserMatchesCard = ({failedUser, matches}) => {
-
-
-
+const UserMatchesCard = ({ failedUser, matches, onResolved, className }) => {
   return (
-    <div>
-      
+    <div className={"shadow-lg rounded bg-white w-full flex flex-column p-4" + " " + className}>
+      <div className="">
+        <p className="text-lg font-semibold">{failedUser.firstName} {failedUser.lastName}</p>
+        <p>{failedUser.email}</p>
+        <p>Failed Reason: {failedUser.failReason}</p>
+      </div>
+      <h1 className="mt-4 font-semibold">Matches Found:</h1>
+      <div className="mt-2 overflow-x-auto">
+        <table className="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Match %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {matches.slice(0,3).map(x =>
+              <tr key={x.email}>
+                <td>{x.email}</td>
+                <td>{x.firstName}</td>
+                <td>{x.lastName}</td>
+                <td>{x.score}%</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <button onClick={onResolved} className="btn bg-green-500">Mark as resolved</button>
     </div>
   )
-
-
 };
 
 export default UserMatchesCard;

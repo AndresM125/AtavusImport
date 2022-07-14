@@ -1,10 +1,15 @@
 import React, { useRef, useState } from "react";
+import UserMatchesCard from "../components/UserMatchesCard";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 const Index = () => {
-
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState("No file selected");
-  const [data, setData] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasErrorsFromServer, setHasErrorsFromServer] = useState(false);
+  const [resultMatches, setResultMatches] = useLocalStorage("RESULT_MATCHES_KEY", []);
+  const [resolvedEmails, setResolvedEmails] = useLocalStorage("RESOLVED_EMAILS", {});
+
   const inputFile = useRef();
 
   const onSelectFileClicked = () => {
@@ -17,11 +22,12 @@ const Index = () => {
   };
 
   const onSubmitCSVFile = () => {
+    setIsLoading(true);
+    setHasErrorsFromServer(false);
     var reader = new FileReader();
     reader.onload = function () {
-      console.log(reader.result);
       var jsonData = csvToJson(reader.result, ["email", "member_code", "first_name", "last_name", "organization", "plan_metadata", "fail_reason"]);
-      setData(jsonData);
+      var sanitizedData = sanitizeData(jsonData);
       setSelectedFile(null);
 
       fetch('/findUsers', {
@@ -29,19 +35,45 @@ const Index = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: jsonData
+        body: JSON.stringify({ failedImportUsers: sanitizedData })
       })
-      .then(response => response.json())
-      .then(result => {
-        console.log(result);
-      })
-      .catch(error => {
-        // TODO: Error handling
-        console.error('Error:', error);
-      });
+        .then(response => response.json())
+        .then(result => {
+          console.log(result);
+          setResultMatches(result.results);
+          setIsLoading(false);
+        })
+        .catch(error => {
+          // TODO: Error handling
+          console.error('Error:', error);
+          setIsLoading(false);
+          setHasErrorsFromServer(true);
+        });
     };
     reader.readAsBinaryString(selectedFile);
   };
+
+  const sanitizeData = (data) => {
+    var duplicates = {};
+    var res = []
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].email != null && data[i].email != "email") {
+        var key = data[i].email + data[i].first_name + data[i].last_name;
+        if (!(key in duplicates) && !(key in resolvedEmails)) {
+          res.push({
+            email: data[i].email,
+            firstName: data[i].first_name,
+            lastName: data[i].last_name,
+            organization: data[i].organization,
+            failReason: data[i].fail_reason
+          });
+          duplicates[key] = true;
+        }
+      }
+    }
+    duplicates = {};
+    return res;
+  }
 
   const csvToJson = (text, headers, quoteChar = '"', delimiter = ',') => {
     const regex = new RegExp(`\\s*(${quoteChar})?(.*?)\\1\\s*(?:${delimiter}|$)`, 'gs');
@@ -63,110 +95,56 @@ const Index = () => {
     });
   }
 
+  const onResolveMatch = (failedImportUser) => {
+    var userKey = failedImportUser.email + failedImportUser.firstName + failedImportUser.lastName;
+
+    setResolvedEmails({ ...resolvedEmails, [userKey]: true });
+    setResultMatches(resultMatches.filter(x => x.failedImportUser.email !== failedImportUser.email || x.failedImportUser.firstName !== failedImportUser.firstName || x.failedImportUser.lastName !== failedImportUser.lastName));
+  };
+
+  const onResetAllData = () => {
+    setResolvedEmails({});
+    setResultMatches([]);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-w-screen min-h-screen flex flex-col items-center justify-center">
+        <h1 className="text-lg font-semibold">Matching Users Against Database Please Wait...</h1>
+        <progress className="progress w-56 mt-4"></progress>
+      </div>
+    )
+  }
+
   return (
     <div className="min-w-screen min-h-screen p-8">
-      <div className="flex flex-col justify-center items-center p-4 bg-gray-200 rounded">
+      <div className="flex flex-col justify-center items-center p-4 shadow-lg rounded bg-white">
+        {hasErrorsFromServer && <p className="text-red-500">*An unexpected error has occured please try again.</p>}
         <p>Upload a CSV file to get started</p>
-        <p>File Selected: {selectedFileName}</p>
+        <p className="mt-2">File Selected: {selectedFileName}</p>
         <input ref={inputFile} className="hidden" type="file" name="file" onChange={inputFileChangedHandler} accept=".csv" />
-        <button className="btn" onClick={onSelectFileClicked}>Select File</button>
-        {selectedFile != null && <button className="btn" onClick={onSubmitCSVFile}>Submit</button>}
+        <button className="btn mt-2 w-[300px]" onClick={onSelectFileClicked}>Select File</button>
+        {selectedFile != null && <button className="btn mt-2 w-[300px] bg-green-500" onClick={onSubmitCSVFile}>Submit</button>}
       </div>
 
-      <p>{JSON.stringify(data)}</p>
+      <div className="mt-8 flex flex-col justify-center items-center p-4 shadow-lg rounded bg-white">
+        <p>*Only use the reset all data button when you need a clean slate</p>
+        <button onClick={onResetAllData} className="btn mt-4 bg-red-500">RESET ALL DATA</button>
+      </div>
+
+      {
+        resultMatches.map((x, idx) =>
+          <UserMatchesCard
+            key={x.failedImportUser.email + x.failedImportUser.firstName + x.failedImportUser.lastName}
+            className={"mt-8"}
+            failedUser={x.failedImportUser}
+            matches={x.matches}
+            onResolved={_ => { onResolveMatch(x.failedImportUser) }}
+          />
+        )
+      }
     </div>
   )
 };
 
 export default Index;
-
-/*
-/findUsers
-{
-  "results": [
-      {
-          "failedImportUser": {
-              "email": "quentinsbusiness@gmail.com",
-              "firstName": "Quentin",
-              "lastName": "White ",
-              "organization": "",
-              "failReason": "sf"
-          },
-          "matches": [
-              {
-                  "email": "quentinsbusiness@gmail.com",
-                  "firstName": "Quentin",
-                  "lastName": "White",
-                  "score": 99
-              },
-              {
-                  "email": "quentin.uta@gmail.com",
-                  "firstName": "Quentin",
-                  "lastName": "Butler",
-                  "score": 74
-              },
-              {
-                  "email": "quentinesterling@gmail.com",
-                  "firstName": "Quentin",
-                  "lastName": "Sterling",
-                  "score": 72
-              },
-              {
-                  "email": "dustinwhite1259@gmail.com",
-                  "firstName": "Dustin",
-                  "lastName": "White",
-                  "score": 67
-              },
-              {
-                  "email": "tsuposey@gmail.com",
-                  "firstName": "Quentin",
-                  "lastName": "Posey",
-                  "score": 67
-              }
-          ]
-      },
-      {
-          "failedImportUser": {
-              "email": "tjsbball58@aol.com",
-              "firstName": "Thurmond Stone",
-              "lastName": "",
-              "organization": "",
-              "failReason": ""
-          },
-          "matches": [
-              {
-                  "email": "tjsbball58@aol.com",
-                  "firstName": "Thurmond",
-                  "lastName": "Stone",
-                  "score": 98
-              },
-              {
-                  "email": null,
-                  "firstName": "Thurmond",
-                  "lastName": "Stone",
-                  "score": 58
-              },
-              {
-                  "email": "jstone@nederlandisd.org",
-                  "firstName": "Thurmond",
-                  "lastName": "Stone",
-                  "score": 56
-              },
-              {
-                  "email": "txhsbb15@gmail.com",
-                  "firstName": "Tom ",
-                  "lastName": "Collins",
-                  "score": 56
-              },
-              {
-                  "email": "teaton68@aol.com",
-                  "firstName": "Terrence",
-                  "lastName": "Eaton",
-                  "score": 56
-              }
-          ]
-      }
-  ]
-}
-
-*/

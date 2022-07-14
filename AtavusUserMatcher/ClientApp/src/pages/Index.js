@@ -20,6 +20,7 @@ const Index = () => {
     var reader = new FileReader();
     reader.onload = function () {
       console.log(reader.result);
+      setData(csvToJson(reader.result, ["email", "member_code", "first_name", "last_name", "organization", "plan_metadata", "fail_reason"]))
       setSelectedFile(null);
     };
     reader.readAsBinaryString(selectedFile);
@@ -55,7 +56,7 @@ const Index = () => {
         {selectedFile != null && <button className="btn" onClick={onSubmitCSVFile}>Submit</button>}
       </div>
 
-      <p>{data}</p>
+      <p>{JSON.stringify(data)}</p>
     </div>
   )
 };

@@ -8,28 +8,30 @@ using System;
 using AtavusUserMatcher.Models;
 using System.Threading.Tasks;
 using FuzzySharp;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AtavusUserMatcher.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     public class FindUsersController : ControllerBase
     {
         private static readonly int MatchCount = 5;
 
         private readonly ILogger<FindUsersController> _logger;
+        private readonly atavus_dbContext db;
 
-        public FindUsersController(ILogger<FindUsersController> logger)
+        public FindUsersController(ILogger<FindUsersController> logger, atavus_dbContext db)
         {
             _logger = logger;
+            this.db = db;
         }
 
         [HttpPost]
         [Route("")]
         public async Task<IActionResult> FindUsers([FromBody] FindUsersParam data)
         {
-            using var db = new atavus_dbContext();
-
             var users = await db.Users
                 .Where(x => true)
                 .Select(x => new UserMatch(x.Email, x.FirstName, x.LastName))

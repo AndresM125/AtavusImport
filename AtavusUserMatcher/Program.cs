@@ -27,9 +27,6 @@ namespace AtavusUserMatcher
                 options.UseMySql(connetionString, ServerVersion.AutoDetect(connetionString));
             });
 
-            Console.WriteLine(builder.Configuration.GetSection("JWT_AUTH_AUD").Value);
-            Console.WriteLine(builder.Configuration.GetSection("JWT_KEY").Value);
-
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {

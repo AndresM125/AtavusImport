@@ -14,7 +14,7 @@ namespace AtavusUserMatcher.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize]
+    //[Authorize]
     public class FindUsersController : ControllerBase
     {
         private static readonly int MatchCount = 5;

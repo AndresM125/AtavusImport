@@ -24,7 +24,7 @@ namespace AtavusUserMatcher.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("")]
         public async Task<IActionResult> FindUsers([FromBody] FindUsersParam data)
         {

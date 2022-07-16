@@ -25,24 +25,16 @@ namespace AtavusUserMatcher.Controllers
         public AuthController(ILogger<AuthController> logger, IConfiguration configuration)
         {
             _logger = logger;
-            Username = configuration.GetSection("Username").Value;
-            Password = configuration.GetSection("Password").Value;
+            Username = configuration.GetSection("AdminUsername").Value;
+            Password = configuration.GetSection("AdminPassword").Value;
             JWT_KEY = configuration.GetSection("JWT_KEY").Value;
             JWT_AUTH_AUD = configuration.GetSection("JWT_AUTH_AUD").Value;
-
-            Console.WriteLine(JWT_KEY);
-            Console.WriteLine(JWT_AUTH_AUD);
         }
 
         [HttpPost]
-        [Route("")]
+        [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginParam data)
         {
-            Console.WriteLine(data.Username);
-            Console.WriteLine(data.Password);
-            Console.WriteLine(Username);
-            Console.WriteLine(Password);
-
             if (data.Username == Username && data.Password == Password)
             {
                 return Ok(new LoginResult()

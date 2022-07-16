@@ -10,7 +10,7 @@ const UserMatchesCard = ({ failedUser, matches, onResolved, className }) => {
       </div>
       <h1 className="mt-4 font-semibold">Matches Found:</h1>
       <div className="mt-2 overflow-x-auto">
-        <table className="table table-zebra w-full">
+        <table className="table w-full">
           <thead>
             <tr>
               <th>Email</th>
@@ -31,7 +31,7 @@ const UserMatchesCard = ({ failedUser, matches, onResolved, className }) => {
           </tbody>
         </table>
       </div>
-      <button onClick={onResolved} className="btn bg-green-500">Mark as resolved</button>
+      <button onClick={onResolved} className="btn btn-success">Mark as resolved</button>
     </div>
   )
 };

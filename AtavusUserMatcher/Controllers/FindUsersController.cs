@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using AtavusUserMatcher.Data;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -20,9 +19,9 @@ namespace AtavusUserMatcher.Controllers
         private static readonly int MatchCount = 5;
 
         private readonly ILogger<FindUsersController> _logger;
-        private readonly atavus_dbContext db;
+        private readonly atavusContext db;
 
-        public FindUsersController(ILogger<FindUsersController> logger, atavus_dbContext db)
+        public FindUsersController(ILogger<FindUsersController> logger, atavusContext db)
         {
             _logger = logger;
             this.db = db;

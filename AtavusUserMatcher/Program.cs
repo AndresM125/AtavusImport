@@ -1,5 +1,5 @@
 using System.Text;
-using AtavusUserMatcher.Data;
+using AtavusUserMatcher.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,7 @@ namespace AtavusUserMatcher
 
             builder.Services.AddControllersWithViews();
 
-            builder.Services.AddDbContextPool<atavus_dbContext>(options =>
+            builder.Services.AddDbContextPool<atavusContext>(options =>
             {
                 var connetionString = builder.Configuration.GetConnectionString("DefaultConnection");
                 options.UseMySql(connetionString, ServerVersion.AutoDetect(connetionString));
@@ -38,7 +38,13 @@ namespace AtavusUserMatcher
                     };
                 });
 
+            builder.Services.AddCors(policyBuilder =>
+                policyBuilder.AddDefaultPolicy(policy =>
+                    policy.WithOrigins("*").AllowAnyHeader().AllowAnyHeader()));
+
             var app = builder.Build();
+
+            app.UseCors();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -46,7 +52,7 @@ namespace AtavusUserMatcher
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-            
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();

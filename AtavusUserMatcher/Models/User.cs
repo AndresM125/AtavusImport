@@ -49,6 +49,9 @@ namespace AtavusUserMatcher.Models
         public string? Permissions { get; set; }
         public bool? TestAccount { get; set; }
         public int? HubspotId { get; set; }
+        public string? SecondaryEmail { get; set; }
+        public string? TwoFactorAuthCode { get; set; }
+        public bool IsEmailVerified { get; set; }
 
         public virtual Role? Role { get; set; }
         public virtual PlanBuilder? PlanBuilder { get; set; }
